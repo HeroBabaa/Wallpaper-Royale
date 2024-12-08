@@ -1,0 +1,57 @@
+{
+    "window_settings":{
+        "WIDTH_OFFSET": 450,
+        "HEIGHT_OFFSET": 100,
+        "LEFT_X_PADDING": 10,
+        "BETWEEN_PADDING": 10,
+        "RIGHT_X_PADDING": 10
+    },
+    "leaderboard_settings":{
+        "LEADERBOARD_START_OFFSET": 10,
+        "LEADERBOARD_LINE_HEIGHT": 25,
+        "LEADERBOARD_FONT_SIZE": 24,
+	"LEADERBOARD_LAST_WIN_AREA": 125
+    },
+    "circle_settings":{
+        "INITIAL_HEALTH": 100,
+        "MAX_HEALTH_PER_RADIUS": 4.25,
+        "HEALTH_EXPONENT_FOR_SCALE": 0.9,
+        "MIN_START_RADIUS": 40,
+        "MAX_START_RADIUS": 45,
+        "MAX_START_VEL_X": 6,
+        "MAX_START_VEL_Y": 6,
+        "MAX_VEL_X": 25,
+        "MAX_VEL_Y": 25,
+	"BUFFER_COUNT": 0
+    },
+    "combat_settings":{
+        "RAD_TO_STRENGTH": 0.05,
+        "RADIUS_EXPONENT_FOR_STRENGTH": 0.85,
+        "WALL_DAMAGE": 0
+    },
+    "power_up_settings":{
+        "POWER_UP_RADIUS": 15,
+        "POWER_UP_SPAWN_RATE": 40,
+        "MAX_POWER_UP_COUNT": 7,
+
+	"SPEED_POWER_UP_WEIGHT": 30,
+	"SCALE_POWER_UP_WEIGHT": 30,
+	"HEALTH_POWER_UP_WEIGHT": 20,
+	"INVINCIBLE_POWER_UP_WEIGHT": 10,
+	"DUPE_POWER_UP_WEIGHT": 5,
+
+        "VEL_X_MULT": 1.4,
+        "VEL_Y_MULT": 1.4,
+        "SCALE_INCREASE_AMOUNT": 10,
+        "POWER_UP_HEALTH_INCREASE": 3,
+	"INVINCIBLE_POWER_UP_DURATION": 2,
+	"INVINCIBLE_SHIELD_RADIUS": 3,
+	"DUPE_RADIUS_RATIO": 0.6
+    },
+    "notification_settings":{
+        "WIN_SOUND_EFFECT_ENABLED": true
+    },
+    "fps_control":{
+        "FPS": 60
+    }
+}
