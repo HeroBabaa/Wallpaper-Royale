@@ -9,3 +9,4 @@ pip install -r requirements.txt
 in the folder directory that the program is located in.
 
 Run the main.py file for the main game, the leaderboard.py for the leaderboard, and notification.py for the notifications.
+The launcher.bat file just runs main.py and leaderboard.py, nothing less, nothing more.
