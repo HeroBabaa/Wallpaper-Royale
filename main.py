@@ -581,7 +581,7 @@ def game_loop():
                 if len(get_players(circles)) == 1:
                     winner_name = circles[0].player_name
                     winner_image_path = circles[0].image_path
-                    message = (f"{winner_name} kazandı!").upper()
+                    message = (f"{winner_name} wins!").upper()
                     circles[0].save['win_count'] += 1
                     save_data(player_saves)
                     SPI_SETDESKWALLPAPER = 20
