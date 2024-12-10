@@ -11,7 +11,7 @@ in the folder directory that the program is located in.
 Run the main.py file for the main game, the leaderboard.py for the leaderboard, and notification.py for the notifications.
 The launcher.bat file just runs main.py and leaderboard.py, nothing less, nothing more.
 
-Add the images you want to use into the images folder, and add the win sound effects you want to use into the win_sound_effects folder. While the win sound effects are enabled by default, they can be disabled through the config file, just replace the "true" with "false" under the notification settings.
+Add the images you want to use into the images folder, and add the win sound effects you want to use into the win_sound_effects folder. While the win sound effects are enabled by default, they can be disabled through the config file, just replace the "true" with "false" under the notification settings. To add a win sound effect to a player, you need to go into the saves file and put the file name in the related area.
 
 You can edit most game settings from the config.json file. I don't remember what most of them do, so good luck with that. You can probably guess from the setting name.
 
