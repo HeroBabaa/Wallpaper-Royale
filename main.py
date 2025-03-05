@@ -658,8 +658,8 @@ def game_loop():
                     display_message(screen, message)
 
             pygame.display.flip()  # Update the display
-        else:
-            pygame.time.delay(int(1000/60))  # Add a small delay to reduce CPU usage
+        #else:
+            #pygame.time.delay(int(1000/60))  # Add a small delay to reduce CPU usage
         clock.tick(FPS)  # Maintain the frame rate
 
 
