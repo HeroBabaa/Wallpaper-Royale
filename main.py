@@ -1,13 +1,14 @@
 import pygame
 from pygame.locals import *
+from powerup import *
 import random
 import math
 import os
 from PIL import Image
 import ctypes
 import json
-from powerup import *
 
+from render_check import *
 
 with open("config.json") as json_config_file:
     config = json.load(json_config_file)
@@ -72,12 +73,15 @@ script_directory = None
 image_paths = None
 
 
-
+# Get the window handle from pygame's window manager info.
+wm_info = pygame.display.get_wm_info()
+hwnd = wm_info.get('window')  # This is available on Windows
 
 
 # Helper function to create a circular mask
-def create_circular_mask(image, radius):
+def create_circular_mask(image, radius, image_name):
     """Create a circular mask for an image."""
+    #print(f"{image_name}: + {radius * 2}, {radius * 2}")
     mask = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
     pygame.draw.circle(mask, (255, 255, 255, 255), (radius, radius), radius)
     image = pygame.transform.smoothscale(image, (radius * 2, radius * 2))
@@ -106,8 +110,9 @@ class Circle:
         self.strength_buff = self.save['strength_buff']
         self.radius += self.save['radius_buff']
 
-        self.image = create_circular_mask(pygame.image.load(self.image_path).convert_alpha(), self.radius)
         self.player_name = os.path.basename(os.path.basename(self.image_path).split('/')[-1]).split('.')[0]
+        self.image = create_circular_mask(pygame.image.load(self.image_path).convert_alpha(), self.radius, self.player_name)
+        
 
         self.update_health()
 
@@ -158,15 +163,18 @@ class Circle:
 
         # Render the health as text (and strength for debugging) as integers
         if (self.strength_buff == 0):
-            player_text = f"{self.player_name} (HP: {round(self.health, 1)} = {round(self.health_percentage, 1)}%) (STR: {self.calculate_damage_before_buff()}) {self.invincible_duration}"
+            player_text = f"{self.player_name} (HP: {round(self.health, 1)})"
         else:
-            player_text = f"{self.player_name} (HP: {round(self.health, 1)} = {round(self.health_percentage, 1)}%) (STR: {self.calculate_damage_before_buff()} + {self.strength_buff})"
+            player_text = f"{self.player_name} (HP: {round(self.health, 1)} (+STR: {self.strength_buff})"
         
         text = font.render(player_text, True, BLACK)
 
         # Position the text above the circle
         text_rect = text.get_rect(center=(self.x, self.y - self.radius - 10))  # 10 pixels above the circle
         surface.blit(text, text_rect)
+        
+    def get_mass(self):
+        return math.pi * self.radius * self.radius
 
     def increase_speed(self):
         """Increase the circle's speed."""
@@ -179,7 +187,7 @@ class Circle:
     def change_scale(self, new_scale):
         self.radius = new_scale
         self.update_health()
-        self.image = create_circular_mask(pygame.image.load(self.image_path).convert_alpha(), self.radius)
+        self.image = create_circular_mask(pygame.image.load(self.image_path).convert_alpha(), self.radius, self.player_name)
 
     def add_health_percentage(self, added_percentage):
         self.health_percentage += added_percentage
@@ -284,14 +292,18 @@ def handle_circle_collision(c1, c2):
             if velocity_along_normal > 0:
                 return  # Prevent sticking
 
+            # Get the masses for the impulse calculation
+            m1 = c1.get_mass()
+            m2 = c2.get_mass()
+            
             # Calculate impulse scalar
-            impulse = -(2 * velocity_along_normal) / (1 + 1)  # Each circle has mass of 1
+            impulse = -(2 * velocity_along_normal) / (1/m1 + 1/m2)  # Each circle has mass of 1
 
             # Apply the impulse to both circles
-            c1.vel_x += impulse * nx
-            c1.vel_y += impulse * ny
-            c2.vel_x -= impulse * nx
-            c2.vel_y -= impulse * ny
+            c1.vel_x += impulse * nx / m1
+            c1.vel_y += impulse * ny / m1
+            c2.vel_x -= impulse * nx / m2
+            c2.vel_y -= impulse * ny / m2
             
             c2.apply_damage(damage_to_c2)  # c2 takes damage from c1
             c1.apply_damage(damage_to_c1)  # c1 takes damage from c2
@@ -299,8 +311,7 @@ def handle_circle_collision(c1, c2):
 
         
 
-        
-        
+    
 
 
 
@@ -334,7 +345,7 @@ def create_circles(count, image_path_set, player_saves):
 
 def create_duplicate_circle(circle, circles):
     Id = circle.Id
-    radius = circle.radius * DUPE_RADIUS_RATIO
+    radius = (circle.radius - circle.save['radius_buff']) * DUPE_RADIUS_RATIO
     x = circle.x
     y = circle.y
     vel_x = circle.vel_x
@@ -373,7 +384,7 @@ def display_message(surface, message):
 
 # Function to check if a file is an image
 def is_image_file(file):
-    valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff']
+    valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.jfif']
     return os.path.splitext(file)[1].lower() in valid_extensions
 
 # Function to fetch all image paths in a directory
@@ -425,7 +436,8 @@ def add_player(player_name):
         'win_count' : 0,
         'health_buff': 0,
         'strength_buff': 0,
-        'radius_buff': 0
+        'radius_buff': 0,
+        'win_sound_effect_path': ''
     }
     print(f"Added Player: {player_name}")
     return added_player
@@ -500,14 +512,46 @@ def game_loop():
     buffer_pos = 0
     is_buffer = False
 
+    rendering_enabled = True  # Flag to enable/disable rendering
+
+    print_period = 10
+    print_count_point = 0
+
+    rendering_check_period = 10
+    rendering_check_point = 0
+
     # Main game loop
     running = True
     while running:
+
+        print_count_point += 1
+        if (print_count_point%print_period == 0) :
+            print(rendering_enabled)
+        
         
         # Handle events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+            # Detect when the window is hidden or minimized
+            if event.type == pygame.WINDOWHIDDEN:  # Correct event name!
+                rendering_enabled = False
+            elif event.type == pygame.WINDOWSHOWN:
+                rendering_enabled = True
+
+
+        # Check if the window is focused
+        rendering_check_point += 1
+        if (rendering_check_point % rendering_check_period == 0) :
+            if not pygame.display.get_active() or not is_window_on_current_desktop(hwnd):
+                rendering_enabled = False
+            else:
+                rendering_enabled = True
+        
+        
+
+           
 
         # Check if the mouse button is held down to pause the game
         mouse_buttons = pygame.mouse.get_pressed()
@@ -571,6 +615,9 @@ def game_loop():
                         if check_power_up_collision(circle, power_up):
                             power_up_return = power_up.use_power_up(circle, circles)
                             if (power_up_return == "dupe"): create_duplicate_circle(circle, circles)
+                            elif (power_up_return == "teleport"):
+                                circle.x = random.randint(int(circle.radius), int(WIDTH - circle.radius))
+                                circle.y = random.randint(int(circle.radius), int(HEIGHT - circle.radius))
                             power_ups.remove(power_up)  # Remove the power-up once collected
                             break
         
@@ -581,7 +628,7 @@ def game_loop():
                 if len(get_players(circles)) == 1:
                     winner_name = circles[0].player_name
                     winner_image_path = circles[0].image_path
-                    message = (f"{winner_name} wins!").upper()
+                    message = (f"{winner_name} kazandı!").upper()
                     circles[0].save['win_count'] += 1
                     save_data(player_saves)
                     SPI_SETDESKWALLPAPER = 20
@@ -589,25 +636,27 @@ def game_loop():
                     # The ctypes function to change the wallpaper
                     result = ctypes.windll.user32.SystemParametersInfoW(SPI_SETDESKWALLPAPER, 0, winner_image_path, 3)
                 elif len(circles) == 0:
-                    message = "Berabere!"
+                    message = "Draw!"
                 pause_start_time = pygame.time.get_ticks()  # Start the pause timer
 
-        # Draw everything
-        screen.fill(WHITE)
-        for circle in circles:
-            circle.draw(screen)
+        if rendering_enabled:
+            
+            # Draw everything
+            screen.fill(WHITE)
+            for circle in circles:
+                circle.draw(screen)
 
-        if (len(power_ups) > 0):
-            for power_up in power_ups:
-                power_up.draw(screen)
+            if (len(power_ups) > 0):
+                for power_up in power_ups:
+                    power_up.draw(screen)
         
 
-        # Display the message if the game is paused
-        if is_paused:
-            if message:
-                display_message(screen, message)
+            # Display the message if the game is paused
+            if is_paused:
+                if message:
+                    display_message(screen, message)
 
-        pygame.display.flip()  # Update the display
+            pygame.display.flip()  # Update the display
         clock.tick(FPS)  # Maintain the frame rate
 
 
@@ -618,5 +667,5 @@ def game_loop():
 
 
 if __name__ == "__main__":
-    print("Ladies and gentleman, this script manages the game.")
+    print("Baylar ve bayanlar, bu sistem oyunu kontrol eder")
     game_loop()
