@@ -658,6 +658,8 @@ def game_loop():
                     display_message(screen, message)
 
             pygame.display.flip()  # Update the display
+        else:
+            pygame.time.delay(1/60)  # Add a small delay to reduce CPU usage
         clock.tick(FPS)  # Maintain the frame rate
 
 
@@ -668,5 +670,5 @@ def game_loop():
 
 
 if __name__ == "__main__":
-    print("Baylar ve bayanlar, bu sistem oyunu kontrol eder")
+    print("Ladies and gentleman, this system controls the game.")
     game_loop()
