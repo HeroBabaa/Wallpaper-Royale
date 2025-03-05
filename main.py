@@ -524,9 +524,10 @@ def game_loop():
     running = True
     while running:
 
-        print_count_point += 1
-        if (print_count_point%print_period == 0) :
-            print(rendering_enabled)
+        # Troubleshooting Things
+        #print_count_point += 1
+        #if (print_count_point%print_period == 0) :
+        #    print(rendering_enabled)
         
         
         # Handle events

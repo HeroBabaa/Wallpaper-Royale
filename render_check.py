@@ -4,11 +4,6 @@ from ctypes import POINTER, byref
 from ctypes.wintypes import HWND, BOOL
 
 
-
-
-
-
-
 # Define the IVirtualDesktopManager interface.
 class IVirtualDesktopManager(comtypes.IUnknown):
     _iid_ = GUID("{a5cd92ff-29be-454c-8d04-d82879fb3f1b}")
@@ -33,6 +28,6 @@ def is_window_on_current_desktop(hwnd):
         on_current = vdm.IsWindowOnCurrentDesktop(hwnd)
         return bool(on_current)
     except Exception as e:
-        print("Virtual desktop check error:", e)
+        #print("Virtual desktop check error:", e)
         # If there's an error, assume the window is visible.
         return True
