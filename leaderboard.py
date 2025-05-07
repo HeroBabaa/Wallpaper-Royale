@@ -128,7 +128,7 @@ def run_leaderboard():
 
                                 if not last_winner is None:
                                         LEADERBOARD_font = pygame.font.Font(None, LEADERBOARD_font_size + 10)
-                                        text = f"En son kazanan:"
+                                        text = f"Last Winner:"
                                         LEADERBOARD_text_surface = LEADERBOARD_font.render(text, True, (0, 0, 0))  # Black text
                                         LEADERBOARD_screen.blit(LEADERBOARD_text_surface, (10, LEADERBOARD_HEIGHT - 90))
 
