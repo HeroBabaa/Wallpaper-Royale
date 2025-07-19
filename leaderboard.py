@@ -11,7 +11,6 @@ def run_leaderboard():
         
         with open("config.json") as json_config_file:
             config = json.load(json_config_file)
-            json_config_file.close()
         
 
 
@@ -40,6 +39,8 @@ def run_leaderboard():
         
         # Font settings
         LEADERBOARD_font_size = config['leaderboard_settings']['LEADERBOARD_FONT_SIZE']
+        font_regular = pygame.font.Font(None, LEADERBOARD_font_size)
+        font_large = pygame.font.Font(None, LEADERBOARD_font_size + 10)
 
 
         # Max displayable players
@@ -58,92 +59,98 @@ def run_leaderboard():
 
         running = True
         last_load_time = time.time() - 1
+        clock = pygame.time.Clock()
 
         rendering_check_period = 10
         rendering_check_point = 0
+        rendering_enabled = True
         
-        while running:
-                # Event handling
-                for event in pygame.event.get():
-                    if event.type == QUIT:
-                        running = False
+        try:
+                while running:
+                        # Event handling
+                        for event in pygame.event.get():
+                            if event.type == QUIT:
+                                running = False
 
-                    # Detect when the window is hidden or minimized
-                    if event.type == pygame.WINDOWHIDDEN:  # Correct event name!
-                        rendering_enabled = False
-                    elif event.type == pygame.WINDOWSHOWN:
-                        rendering_enabled = True
+                            # Detect when the window is hidden or minimized
+                            if event.type == pygame.WINDOWHIDDEN:  # Correct event name!
+                                rendering_enabled = False
+                            elif event.type == pygame.WINDOWSHOWN:
+                                rendering_enabled = True
+        
 
 
-
-                # Check if the window is focused
-                rendering_check_point += 1
-                if (rendering_check_point % rendering_check_period == 0) :
-                    if not pygame.display.get_active() or not is_window_on_current_desktop(hwnd):
-                        rendering_enabled = False
-                    else:
-                        rendering_enabled = True
+                        # Check if the window is focused
+                        #rendering_check_point += 1
+                        #if (rendering_check_point % rendering_check_period == 0) :
+                        #    if not pygame.display.get_active() or not is_window_on_current_desktop(hwnd):
+                        #        rendering_enabled = False
+                        #    else:
+                        #        rendering_enabled = True
 
                 
-                if (rendering_enabled):
                         # Load data from a JSON file every second
                         if time.time() - last_load_time > 1:  # Adjust the interval as needed
-                            try:
-                                with open('saves/saves.json', 'r', encoding='utf-8') as f:
-                                    data = json.load(f)
-                                    f.close()
+                                try:
+                                        try:
+                                            with open('saves/saves.json', 'r', encoding='utf-8') as f:
+                                                data = json.load(f)
+                                        except (FileNotFoundError, json.JSONDecodeError) as e:
+                                                print(f"Error loading JSON: {e}")
+                                                data = []
 
-                                    if not prev_data is None:
-                                        for player in data:
-                                                for old_player in prev_data:
-                                                        if (old_player['player_name'] == player['player_name']):
-                                                                if not (old_player['win_count'] == player['win_count']):
-                                                                        last_winner = player['player_name']
-                                                                        break
+                                        if not prev_data is None:
+                                                for player in data:
+                                                        for old_player in prev_data:
+                                                                if (old_player['player_name'] == player['player_name']):
+                                                                        if not (old_player['win_count'] == player['win_count']):
+                                                                                last_winner = player['player_name']
+                                                                                break
                                                         
                                     
+        
+                                        prev_data = data
+                                except FileNotFoundError:
+                                        print("File not found. Please ensure the JSON file exists.")
+                                        data = []  # Fallback to an empty list if the file is missing
+        
+                                # Sort data and take the top 6 players
+                                LEADERBOARD_sorted_data = sorted(data, key=lambda x: x['win_count'], reverse=True)[:LEADERBOARD_max_player_display]
 
-                                    prev_data = data
-                            except FileNotFoundError:
-                                print("File not found. Please ensure the JSON file exists.")
-                                data = []  # Fallback to an empty list if the file is missing
+                                last_load_time = time.time()
 
-                            # Sort data and take the top 6 players
-                            LEADERBOARD_sorted_data = sorted(data, key=lambda x: x['win_count'], reverse=True)[:LEADERBOARD_max_player_display]
-
-                            last_load_time = time.time()
-
-                        if 'LEADERBOARD_sorted_data' in locals():
+                                if (rendering_enabled):
                         
-                                LEADERBOARD_screen.fill((255, 255, 255))  # Clear screen with white background
-                                y_offset = LEADERBOARD_START_OFFSET
-                                player_rank = 1
-                                LEADERBOARD_font = pygame.font.Font(None, LEADERBOARD_font_size)
-                                for player in LEADERBOARD_sorted_data:
-                                        text = f"{player_rank} | {player['player_name']}: {player['win_count']}"
-                                        LEADERBOARD_text_surface = LEADERBOARD_font.render(text, True, (0, 0, 0))  # Black text
-                                        LEADERBOARD_screen.blit(LEADERBOARD_text_surface, (10, y_offset))
-                                        y_offset += LEADERBOARD_LINE_HEIGHT  # Move down for the next player
-                                        player_rank += 1
+                                        LEADERBOARD_screen.fill((255, 255, 255))  # Clear screen with white background
+                                        y_offset = LEADERBOARD_START_OFFSET
+                                        player_rank = 1
+                                        for player in LEADERBOARD_sorted_data:
+                                                text = f"{player_rank} | {player['player_name']}: {player['win_count']}"
+                                                LEADERBOARD_text_surface = font_regular.render(text, True, (0, 0, 0))  # Black text
+                                                LEADERBOARD_screen.blit(LEADERBOARD_text_surface, (10, y_offset))
+                                                y_offset += LEADERBOARD_LINE_HEIGHT  # Move down for the next player
+                                                player_rank += 1
 
-                                if not last_winner is None:
-                                        LEADERBOARD_font = pygame.font.Font(None, LEADERBOARD_font_size + 10)
-                                        text = f"Last Winner:"
-                                        LEADERBOARD_text_surface = LEADERBOARD_font.render(text, True, (0, 0, 0))  # Black text
-                                        LEADERBOARD_screen.blit(LEADERBOARD_text_surface, (10, LEADERBOARD_HEIGHT - 90))
+                                        if not last_winner is None:
+                                                text = f"Last Winner:"
+                                                LEADERBOARD_text_surface = font_large.render(text, True, (0, 0, 0))  # Black text
+                                                LEADERBOARD_screen.blit(LEADERBOARD_text_surface, (10, LEADERBOARD_HEIGHT - 90))
 
-                                        text = f"{last_winner}!"
-                                        LEADERBOARD_text_surface = LEADERBOARD_font.render(text, True, (0, 0, 0))  # Black text
-                                        LEADERBOARD_screen.blit(LEADERBOARD_text_surface, (10, LEADERBOARD_HEIGHT - 90 + LEADERBOARD_LINE_HEIGHT))
+                                                text = f"{last_winner}!"
+                                                LEADERBOARD_text_surface = font_large.render(text, True, (0, 0, 0))  # Black text
+                                                LEADERBOARD_screen.blit(LEADERBOARD_text_surface, (10, LEADERBOARD_HEIGHT - 90 + LEADERBOARD_LINE_HEIGHT))
 
 
                                 
                         
-                                pygame.display.flip()
-                pygame.time.delay(100)  # Add a small delay to reduce CPU usage
-                
-        pygame.quit()
-
+                                        pygame.display.flip()
+                        clock.tick(3)
+                        
+                pygame.quit()
+        except Exception as e:
+                print(f"Unexpected error: {e}")
+                with open("leaderboard_error_log.txt", "a") as log_file:
+                        log_file.write(f"{time.ctime()}: {str(e)}\n")
 
 print("Ladies and gentleman, this system is for keeping track of the leaderboard.")
 run_leaderboard()
